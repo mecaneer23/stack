@@ -5,10 +5,17 @@ import curses
 
 def main(stdscr):
     curses.curs_set(0)
+    curses.use_default_colors()
+    curses.init_pair(1, curses.COLOR_GREEN, -1)
+    curses.init_pair(2, curses.COLOR_RED, -1)
+    colors = {
+        "horizontal": 1,
+        "vertical": 2,
+    }
     stdscr.nodelay(True)
     stdscr.timeout(100)
-    vertical_layer_char = "*"
-    horizontal_layer_char = "#"
+    vertical_char = "*"
+    horizontal_char = "#"
     score = 0
     screen_size = min(stdscr.getmaxyx()) - 1
     tower_y, tower_x = screen_size * 2 // 3, screen_size * 4 // 3
@@ -25,7 +32,8 @@ def main(stdscr):
         game_win.addstr(
             (screen_size - tower_y) // 2 + i,
             screen_size - tower_x // 2,
-            horizontal_layer_char * tower_x
+            horizontal_char * tower_x,
+            curses.color_pair(colors["horizontal"])
         )
     stdscr.refresh()
     game_win.refresh()
