@@ -1,9 +1,9 @@
-+7 screen_size is min of window width/height - 1
-+7 create newwin of that size
-+7 draw box around newwin
-+7 make timer for each game tick
-+7 store score in a variable
-+7 use alternate chars to use as different layers (top-down view)
-+7 first layer should be drawn already
--7 layers with one symbol come in from the top and bounce off the bottom/top, other symbol starts left, bounces right/left
--7 space/enter to drop current box on tower
++ screen_size is min of window width/height - 1
++ create newwin of that size
++ draw box around newwin
++ make timer for each game tick
++ store score in a variable
++ use alternate chars to use as different layers (top-down view)
++ first layer should be drawn already
+- layers with one symbol come in from the top and bounce off the bottom/top, other symbol starts left, bounces right/left
+- space/enter to drop current box on tower
