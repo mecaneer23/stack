@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-#pylint: disable=missing-module-docstring
-#pylint: disable=missing-function-docstring, no-member, invalid-name
+# pylint: disable=missing-module-docstring
+# pylint: disable=missing-function-docstring, no-member, invalid-name
 
 import curses
 from typing import Any
@@ -15,36 +15,64 @@ def init(stdscr: Any) -> None:
     stdscr.timeout(100)
 
 
+def draw_vertical() -> None:
+    CHAR = "*"
+    raise NotImplementedError("draw_vertical")
+
+
+def draw_horizontal(
+    game_win: Any, screen_size: int, begin_y: int, begin_x: int, height: int, width: int
+) -> None:
+    CHAR = "#"
+    for i in range(width):
+        game_win.addstr(
+            (screen_size - width) // 2 + i,
+            screen_size - height // 2,
+            CHAR * height,
+            curses.color_pair(1),
+        )
+
+
+def clamp(counter: int, minimum: int, maximum: int) -> int:
+    return min(max(counter, minimum), maximum - 1)
+
+
+def get_start_pos(screen_yx: tuple[int, int], direction_is_horizontal: bool, heading_is_positive: bool, start_pos: int) -> int:
+    if direction_is_horizontal:
+        return clamp(start_pos, 0, screen_yx[1])
+    raise NotImplementedError()
+    # return clamp()
+
+
 def main(stdscr: Any) -> None:
     init(stdscr)
-    colors = {
-        "horizontal": 1,
-        "vertical": 2,
-    }
-    vertical_char = "*"
-    horizontal_char = "#"
     score = 0
-    SCREEN_SIZE = min(stdscr.getmaxyx()) - 1
-    tower_y, tower_x = SCREEN_SIZE * 2 // 3, SCREEN_SIZE * 4 // 3
-    last_tower_y, last_tower_x = tower_y, tower_x
+    direction_is_horizontal = True
+    screen_size = min(stdscr.getmaxyx()) - 1
+    tower_width, tower_height = screen_size * 2 // 3, screen_size * 4 // 3
+    last_width, last_height = tower_width, tower_height
     game_win = curses.newwin(
-        SCREEN_SIZE,
-        int(SCREEN_SIZE * 2),
-        stdscr.getmaxyx()[0] // 2 - SCREEN_SIZE // 2,
-        stdscr.getmaxyx()[1] // 2 - SCREEN_SIZE,
+        screen_size,
+        int(screen_size * 2),
+        stdscr.getmaxyx()[0] // 2 - screen_size // 2,
+        stdscr.getmaxyx()[1] // 2 - screen_size,
     )
-    game_win.box()
-    # while True:
-    for i in range(tower_y):
-        game_win.addstr(
-            (SCREEN_SIZE - tower_y) // 2 + i,
-            SCREEN_SIZE - tower_x // 2,
-            horizontal_char * tower_x,
-            curses.color_pair(colors["horizontal"])
-        )
-    stdscr.refresh()
-    game_win.refresh()
-    game_win.getch()
+    start_pos = 0
+    while True:
+        game_win.box()
+        try:
+            if game_win.getch() != -1:
+                score += 1
+                direction_is_horizontal = not direction_is_horizontal
+        except KeyboardInterrupt:
+            return
+        if direction_is_horizontal:
+            draw_horizontal(game_win, screen_size, 0, 0, tower_height, tower_width)
+        # else:
+        #     draw_vertical(game_win, screen_size, _, _, tower_height, tower_width)
+        start_pos = get_start_pos(game_win.getmaxyx(), direction_is_horizontal, heading_is_positive, start_pos)
+        stdscr.refresh()
+        game_win.refresh()
 
 
 if __name__ == "__main__":
