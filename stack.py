@@ -1,9 +1,17 @@
 #!/usr/bin/env python3
-# pylint: disable=missing-module-docstring
+# pylint: disable=missing-module-docstring, missing-class-docstring
 # pylint: disable=missing-function-docstring, no-member, invalid-name
 
 import curses
+from enum import Enum
 from typing import Any
+
+
+class Direction(Enum):
+    UP = 1
+    DOWN = 2
+    LEFT = 3
+    RIGHT = 4
 
 
 def init(stdscr: Any) -> None:
@@ -13,6 +21,23 @@ def init(stdscr: Any) -> None:
     curses.init_pair(2, curses.COLOR_RED, -1)
     stdscr.nodelay(True)
     stdscr.timeout(100)
+
+
+def is_horizontal(direction: Direction):
+    return direction in (Direction.LEFT, Direction.RIGHT)
+
+
+def is_vertical(direction: Direction):
+    return direction in (Direction.UP, Direction.DOWN)
+
+
+def opposite(direction: Direction):
+    return {
+        Direction.UP: Direction.DOWN,
+        Direction.DOWN: Direction.UP,
+        Direction.RIGHT: Direction.LEFT,
+        Direction.LEFT: Direction.RIGHT,
+    }[direction]
 
 
 def draw_vertical() -> None:
@@ -33,21 +58,26 @@ def draw_horizontal(
         )
 
 
-def clamp(counter: int, minimum: int, maximum: int) -> int:
-    return min(max(counter, minimum), maximum - 1)
-
-
-def get_start_pos(screen_yx: tuple[int, int], direction_is_horizontal: bool, heading_is_positive: bool, start_pos: int) -> int:
-    if direction_is_horizontal:
-        return clamp(start_pos, 0, screen_yx[1])
-    raise NotImplementedError()
-    # return clamp()
+def get_start_pos(
+    screen_yx: tuple[int, int], direction: Direction, start_pos: int
+) -> tuple[int, Direction]:
+    if is_horizontal(direction):
+        if start_pos < 0:
+            return 0, Direction.RIGHT
+        if start_pos > screen_yx[1]:
+            return screen_yx[1], Direction.LEFT
+    if is_vertical(direction):
+        if start_pos < 0:
+            return 0, Direction.UP
+        if start_pos > screen_yx[0]:
+            return screen_yx[0], Direction.DOWN
+    return start_pos, direction
 
 
 def main(stdscr: Any) -> None:
     init(stdscr)
     score = 0
-    direction_is_horizontal = True
+    direction = Direction.RIGHT
     screen_size = min(stdscr.getmaxyx()) - 1
     tower_width, tower_height = screen_size * 2 // 3, screen_size * 4 // 3
     last_width, last_height = tower_width, tower_height
@@ -63,14 +93,16 @@ def main(stdscr: Any) -> None:
         try:
             if game_win.getch() != -1:
                 score += 1
-                direction_is_horizontal = not direction_is_horizontal
+                direction = opposite(direction)
         except KeyboardInterrupt:
             return
-        if direction_is_horizontal:
+        if is_horizontal(direction):
             draw_horizontal(game_win, screen_size, 0, 0, tower_height, tower_width)
         # else:
         #     draw_vertical(game_win, screen_size, _, _, tower_height, tower_width)
-        start_pos = get_start_pos(game_win.getmaxyx(), direction_is_horizontal, heading_is_positive, start_pos)
+        start_pos, direction = get_start_pos(
+            game_win.getmaxyx(), direction, start_pos
+        )
         stdscr.refresh()
         game_win.refresh()
 
