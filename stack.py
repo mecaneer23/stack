@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # pylint: disable=missing-module-docstring, missing-class-docstring
-# pylint: disable=missing-function-docstring, no-member, invalid-name
+# pylint: disable=missing-function-docstring, no-member
 
 import curses
 from enum import Enum
@@ -14,6 +14,12 @@ class Direction(Enum):
     RIGHT = 4
 
 
+class Character(Enum):
+    VERTICAL = "*"
+    HORIZONTAL = "#"
+    NONE = ""
+
+
 def init(stdscr: Any) -> None:
     curses.curs_set(0)
     curses.use_default_colors()
@@ -23,15 +29,15 @@ def init(stdscr: Any) -> None:
     stdscr.timeout(100)
 
 
-def is_horizontal(direction: Direction):
+def is_horizontal(direction: Direction) -> bool:
     return direction in (Direction.LEFT, Direction.RIGHT)
 
 
-def is_vertical(direction: Direction):
+def is_vertical(direction: Direction) -> bool:
     return direction in (Direction.UP, Direction.DOWN)
 
 
-def opposite(direction: Direction):
+def opposite(direction: Direction) -> Direction:
     return {
         Direction.UP: Direction.DOWN,
         Direction.DOWN: Direction.UP,
@@ -40,22 +46,30 @@ def opposite(direction: Direction):
     }[direction]
 
 
-def draw_vertical() -> None:
-    CHAR = "*"
-    raise NotImplementedError("draw_vertical")
-
-
-def draw_horizontal(
-    game_win: Any, screen_size: int, begin_y: int, begin_x: int, height: int, width: int
+def draw(
+    game_win: Any,
+    screen_size: int,
+    begin_y: int,
+    begin_x: int,
+    height: int,
+    width: int,
+    char: Character,
 ) -> None:
-    CHAR = "#"
     for i in range(width):
         game_win.addstr(
             (screen_size - width) // 2 + i,
             screen_size - height // 2,
-            CHAR * height,
+            char.value * height,
             curses.color_pair(1),
         )
+
+
+def get_char(direction: Direction) -> Character:
+    if is_horizontal(direction):
+        return Character.HORIZONTAL
+    if is_vertical(direction):
+        return Character.VERTICAL
+    return Character.NONE
 
 
 def get_start_pos(
@@ -88,6 +102,7 @@ def main(stdscr: Any) -> None:
         stdscr.getmaxyx()[1] // 2 - screen_size,
     )
     start_pos = 0
+    draw(game_win, screen_size, 0, 0, tower_height, tower_width, Character.VERTICAL)
     while True:
         game_win.box()
         try:
@@ -96,13 +111,8 @@ def main(stdscr: Any) -> None:
                 direction = opposite(direction)
         except KeyboardInterrupt:
             return
-        if is_horizontal(direction):
-            draw_horizontal(game_win, screen_size, 0, 0, tower_height, tower_width)
-        # else:
-        #     draw_vertical(game_win, screen_size, _, _, tower_height, tower_width)
-        start_pos, direction = get_start_pos(
-            game_win.getmaxyx(), direction, start_pos
-        )
+        draw(game_win, screen_size, 0, start_pos, tower_height, tower_width, get_char(direction))
+        start_pos, direction = get_start_pos(game_win.getmaxyx(), direction, start_pos)
         stdscr.refresh()
         game_win.refresh()
 
